@@ -3273,6 +3273,11 @@ done:
 	newChunkEnd = e2;
 }
 
+static void mark_js_ch(int dot, int dol){
+	cw->js_ch_dot = dot;
+	cw->js_ch_dol = dol;
+}
+
 // Believe it or not, I have exercised all the pathways in this routine.
 // It's rather mind numbing.
 static bool reportZ(void)
@@ -3311,6 +3316,9 @@ static bool reportZ(void)
 			else
 				i_printf(MSG_LineDeleteZ2, sameFront + 1,
 					 front1z + 1, sameBack1);
+
+			mark_js_ch(sameFront + 1, sameBack1);
+
 			goto done;
 		}
 // double add is more common, and also unambiguous.
@@ -3322,6 +3330,9 @@ static bool reportZ(void)
 			else
 				i_printf(MSG_LineAddZ2, sameFront + 1,
 					 front2z + 1, sameBack2);
+
+			mark_js_ch(sameFront + 1, sameBack2);
+
 			goto done;
 		}
 		if (oplow == 3) {
@@ -3334,39 +3345,58 @@ static bool reportZ(void)
 			else
 				i_printf(MSG_LineUpdateRange, front2z + 1,
 					 sameBack2);
+
+			mark_js_ch(front2z + 1, sameBack2); 
+
 			goto done;
 		}
 		if (ophigh == 3) {
-// if the deleted block is big then report it, otherwise ignore it.
-			if (act1 >= 10)
+// if the deleted block is big then report it, otherwise ignore it (but still mark js_ch_dot and js_ch_dol).
+			if (act1 >= 10) { 
 				i_printf(MSG_LineDelete2, act1, front1z);
-			else if (oplow == 1)
+				mark_js_ch(act1, front1z); 
+			} else if (oplow == 1) {
 				i_printf(MSG_LineAdd1, sameFront + 1);
-			else if(sameFront + 1 == cw->dot)
+				mark_js_ch(sameFront + 1, sameFront + 1); 
+			} else if(sameFront + 1 == cw->dot) {
 				printDot();
-			else
+				mark_js_ch(sameFront + 1, sameFront + 1); 
+			} else {
 				i_printf(MSG_LineUpdate1, sameFront + 1);
+				mark_js_ch(sameFront + 1, sameFront + 1); 
+			}
 			goto done;
 		}
 // a mix of add and update, call it an update.
 // If the second group is big then switch to range message.
-		if (act2 > 10 && ophigh == 2)
+		if (act2 > 10 && ophigh == 2) {
 			i_printf(MSG_LineUpdateRange,
 				 (front2z - sameFront <
 				  10 ? sameFront + 1 : front2z + 1), sameBack2);
-		else if (act2 == 1) {
+			mark_js_ch((front2z - sameFront <
+				  10 ? sameFront + 1 : front2z + 1), sameBack2);
+		} else if (act2 == 1) {
 			if(cw->dot == sameFront + 1) {
 				i_printf(MSG_LineUpdate1, sameBack2);
 				printDot();
+				mark_js_ch(sameBack2, sameBack2);
 			} else if(cw->dot == sameBack2) {
 				i_printf(MSG_LineUpdate1, sameFront + 1);
 				printDot();
-			} else i_printf(MSG_LineUpdateZ1, sameFront + 1, sameBack2);
+				mark_js_ch(sameFront + 1, sameFront + 1);
+			} else {
+				i_printf(MSG_LineUpdateZ1, sameFront + 1, sameBack2);
+				mark_js_ch(sameFront + 1, sameBack2);
+			}
 		} else {
 			if(cw->dot == sameFront + 1) {
 				i_printf(MSG_LineUpdate3, front2z + 1,  sameBack2);
 				printDot();
-			} else i_printf(MSG_LineUpdateZ2, sameFront + 1, front2z + 1,  sameBack2);
+				mark_js_ch(front2z +1, sameBack2);
+			} else { 
+				i_printf(MSG_LineUpdateZ2, sameFront + 1, front2z + 1,  sameBack2);
+				mark_js_ch(sameFront + 1, sameBack2);
+			}
 		}
 		goto done;
 	}
@@ -3392,12 +3422,14 @@ static bool reportZ(void)
 // and we would be in the front1z case.
 		i_printf(MSG_LineDeleteZ3, sameFront + 1, back1z - 1,
 			 sameBack1);
+		mark_js_ch(sameFront + 1, sameBack1);
 		goto done;
 	}
 // double add is more common, and also unambiguous.
 // If this algorithm says we added 100 lines, then we added 100 lines.
 	if (oplow == 1 && ophigh == 1) {
 		i_printf(MSG_LineAddZ3, sameFront + 1, back2z - 1, sameBack2);
+		mark_js_ch(sameFront + 1, sameBack2);
 		goto done;
 	}
 	if (ophigh == 3) {
@@ -3409,31 +3441,44 @@ static bool reportZ(void)
 		else
 			i_printf(MSG_LineUpdateRange, sameFront + 1,
 				 back2z - 1);
+		mark_js_ch(sameFront + 1, back2z - 1);
 		goto done;
 	}
 	if (oplow == 3) {
-// if the deleted block is big then report it, otherwise ignore it.
-		if (act1 >= 10)
-			i_printf(MSG_LineDelete2, act1, sameFront);
-		else if (ophigh == 1)
+// if the deleted block is big then report it, otherwise ignore it (but still mark js_ch_dot and js_ch_dol).
+		if (act1 >= 10) {
+			i_printf(MSG_LineDelete2, act1, sameFront); 
+			mark_js_ch(act1, sameFront);
+		} else if (ophigh == 1) {
 			i_printf(MSG_LineAdd1, sameBack2);
-		else if(sameBack2 == cw->dot)
+			mark_js_ch(sameBack2, sameBack2);
+		} else if(sameBack2 == cw->dot) {
 			printDot();
-		else
+			mark_js_ch(cw->dot, cw->dot);
+		} else {
 			i_printf(MSG_LineUpdate1, sameBack2);
+			mark_js_ch(sameBack2, sameBack2);
+		}
 		goto done;
 	}
 // a mix of add and update, call it an update.
 // If the first group is big then switch to range message.
-	if (act2 > 10 && oplow == 2)
+	if (act2 > 10 && oplow == 2) {
 		i_printf(MSG_LineUpdateRange,
 			 sameFront + 1,
 			 (sameBack2 - back2z < 10 ? sameBack2 : back2z - 1));
-	else {
+		mark_js_ch(sameFront + 1,
+			 (sameBack2 - back2z < 10 ? sameBack2 : back2z - 1));
+
+	} else {
 		if(cw->dot == sameBack2) {
 			i_printf(MSG_LineUpdate3, sameFront + 1, back2z - 1);
 			printDot();
-		} else i_printf(MSG_LineUpdateZ3, sameFront + 1, back2z - 1,  sameBack2);
+			mark_js_ch(sameFront + 1, back2z - 1);
+		} else {
+			i_printf(MSG_LineUpdateZ3, sameFront + 1, back2z - 1,  sameBack2);
+			mark_js_ch(sameFront + 1, sameBack2);
+		}
 	}
 
 done:

@@ -5412,6 +5412,21 @@ pwd:
 		return true;
 	}
 
+
+// set dot to JavaScript change dot
+// TODO: @dsl-zero, add documentation; add some checks (browse mode, js, js_ch_dot)
+	if (stringEqual(line, "jsus")) {
+
+		cw->dot = cw->js_ch_dot;
+		return true;
+	}
+
+	if (stringEqual(line, "jsue")) {
+
+		cw->dot = cw->js_ch_dol;
+		return true;
+	}
+
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
 		Frame *f, *fnext;
 		struct histLabel *label, *lnext;

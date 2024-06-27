@@ -456,6 +456,8 @@ struct ebWindow {
 // remember dot and dol for the raw text, when in browse mode
 	int r_dot, r_dol;
 	int f_dot; // forward dot, in case we browse again
+// dot and dollar for JavaScript changes
+        int js_ch_dot, js_ch_dol;
 	struct ebFrame f0; /* first frame */
 	struct ebFrame *jdb_frame; // if in jdb mode
 	char *referrer; // another web page that brought this one to life
