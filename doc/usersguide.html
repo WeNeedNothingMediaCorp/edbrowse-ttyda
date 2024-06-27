@@ -120,7 +120,6 @@ p.cen { text-align: center; }
 <LI><A HREF=#agent> User Agent </A>
 <LI><A HREF=#script> Edbrowse Functions </A>
 <LI><A HREF=#init> The Init Function </A>
-<LI><A HREF=#var> Edbrowse Variables </A>
 <LI><A HREF=#ma> Mail Accounts </A>
 <LI><A HREF=#mt> Plugin Descriptors </A>
 <LI><A HREF=#sampcfg> A Sample Config File </A>
@@ -398,16 +397,6 @@ Spanish: LANG=es by Oriol Prieto
 </ul>
 
 <p>
-Some edbrowse messages include the output of strerror, e.g. when opening, reading, or writing files.
-These text fragments are also internationalized, if you have installed the appropriate libc configuration module for your language.
-This is probably installed on your behalf if you specified a preferred language when setting up the operating system.
-However, other language modules may not be present.
-LANG=es_ES.UTF8 edbrowse causes all the edbrowse messages to display in Spanish, however, if the libc Spanish module is not installed, because your native language is German, then the strerror portion might appear in English,
-as that is the default for strerror when the module corresponding to LANG is not present.
-That could indeed be confusing.
-That said, most users will use edbrowse consistently with the language of their operating system, and this issue will not arise.
-
-<p>
 When an output or error message is displayed,
 accented letters are printed using single bytes, vectoring through an iso8859 page,
 unless the string utf8 or utf-8 appears in $LANG,
@@ -532,12 +521,9 @@ q : quit the current session
 <p>
 Input
 <p>
-~c2~b1 : enter bytes as hex, in this case utf8 for plussminus
-<br>~u1f600 : enter a unicode as hex, in this case the symbol for grin
-<br>~jfood.carrot : enter the carrot emoji from the food group
-<br>~~ : enter a literal tilde, only necessary when the following character is hex or u or j
-<br>P : show prompt (toggle)
-<br>P=foo : set prompt to foo
+P : show prompt (toggle)
+<br>P foo : set prompt to foo
+<br>P=~05 : set prompt to control e, encourages some screen readers to talk
 <br>rl : use readline() on input (toggle), respects $HISTCONTROL
 <p>
 Display Lines in the Buffer
@@ -550,14 +536,13 @@ p : print the current line
 <br>--- : back up three lines
 <br>'a,'bp : print a range of lines marked with labels a and b
 <br>kb : mark the current line as b
-<br>0ks : unset the line label s
 <br>l : list the current line, showing invisible chars and end markers
 <br>endm : show end markers ^$ on listed lines (toggle)
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
-<br>ll=1000 : line length 1000, show the first 1000 chars of each line
+<br>ll 1000 : line length 1000, show the first 1000 chars of each line
 <br> ll : print the current line length
-<br>fll=80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
+<br>fll 80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
 <br>fll 80+ : cut lines to 80 chars but allow some overflow so the next line isn't just one or two words
 <br>fll : print the format line length
 <br>z22 : print the next 22 lines
@@ -628,7 +613,6 @@ Files and Sessions
 f : print the name of the current file
 <br>f foo : set the file name to foo
 <br>f/ : retain only the last component of the filename
-<br>f clear : clear the filename
 <br>e : print the number of the current session
 <br>e3 : move to session 3
 <br>e+ : move to the next editing session
@@ -640,11 +624,6 @@ f : print the name of the current file
 <br>enew : create a new empty buffer in the current session
 <br>etmp : like enew but don't check for buffer written
 <br>e foo : edit the file named foo
-<br>^ e foo : edit foo but don't push the stack, replace the current file. ^ can be prepended to the following e commands as well.
-<br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
-<br>e $EBSRC/buf*.c : variable expansion
-<br> e !command : create a new buffer with the output of the shell command
-<br>e http://this.that.com : http or https download
 <br>e ftp://login:password@example.com/file  ftp download
 <br>e scp://login:password@example.com/absolute-path  scp download
 <br>r foo : read the contents of foo into the current buffer
@@ -661,9 +640,7 @@ f : print the name of the current file
 <br>r-2@$ : read the last line of text from the buffer down 2 levels in the stack
 <br>r-2@, : read in the entire buffer from below
 <br>r-2 : shorthand for r-2@,
-<br>11r !command : put the output of the shell command after line 11
-<br>w : write the buffer out to the current file
-<br>wq : write and quit
+<br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
 <br>w/ : write to the last component of the filename
@@ -679,10 +656,13 @@ f : print the name of the current file
 <br>.w-2@0 : write the current line at the start of the buffer down 2 levels in the stack
 <br>.w-2 : syntax error, @ is necessary for on-stack write, to set the location
 <br>5,7w !command : send lines 5 through 7 to a shell command
+<br>11r !command : put the output of the shell command after line 11
 <br>'a,'bW !command : run a range of lines through a shell command and replace them
 <br>W !sort : sort the lines in the buffer
 <br>w ftp://login:password@example.com/file :  ftp upload
 <br>w scp://login:password@example.com/absolute-path :  scp upload
+<br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
+<br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
 <br>bflist/foo : list each edbrowse session whose file name or title contains the substring foo
 <br>bflist?foo : list in reverse each edbrowse session whose file name or title contains the substring foo
@@ -750,11 +730,8 @@ dr : directory is readonly
 <br> d : delete the file or move it to your trash can; there is no undo
 <br>g/\.o$/d : delete all the .o files
 <br>s/x/y : rename the file
-<br>.m3 : move this file to the directory in session 3.
-You don't need the @ sign here as the file is always placed at the end of the listing. e3 and refresh if you want it in sorted order.
+<br>.m3 : move this file to the directory in session 3
 <br>.t3 : copy this file to the directory in session 3
-<br>.l3 : link this file to the directory in session 3
-<br>.L3 : symlink this file to the directory in session 3, not recommended unless the current directory is an absolute path
 <br>.m+2 : move this file up 2 levels in your editing history. Destination must be a directory. You don't need the @ sign here as the file is always placed at the end of the listing. Go up2 and refresh if you want it in sorted order.
 <br>.t-3 : copy this file down 3 levels in your editing history
 <p>
@@ -765,8 +742,7 @@ b : browse the current file, either html, or email, or rendered by plugin
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the Internet and browse it
 <br>nostack b url : don't push a new window, replace the current window using the new url
-<br>^ b url : same as above
-<br>attimg : show all images even those without alt attributes (toggle)
+<br>^ b url : same as nostack
 <br>ub : unbrowse a file
 <br>ft : show the title of the current web page (file title)
 <br>fa : show the author of the current web page
@@ -857,8 +833,8 @@ sm : send mail [account number]
 <br>imap n : establish an imap connection
 <br>imap 0 : tear down the imap connection
 <br>rf : refresh the folders and their message counts
-<br>l=40 : fetch 40 envelopes at a time
-<br>e=ufs : envelope format is unseen, from, subject
+<br>l 40 : fetch 40 envelopes at a time
+<br>e ufs : envelope format is unseen, from, subject
 <br>a : add folders, like append mode, . when finished
 <br>s/x/y/ : rename a folder - but not a system folder!
 <br>d : delete a folder - but not a system folder! All email in that folder is lost.
@@ -925,17 +901,6 @@ Edbrowse Functions
 <br>&lt;/foo@22,29 : run the commands from lines 22 through 29
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
-<br> var x=7 : set the variable x to 7
-<br> var x=clear : clear the variable x
-<br> var x:=7 : set x in the environment
-<br> var x:=clear : clear x from the environment
-<br>$(x) : expand the variable x
-<br>$(:LANG) : expand the environment variable LANG
-<br>p text : print text
-<br>p $(x) : print the variable x
-<br>$(x+3*y-7) : perform basic arithmetic
-<br>[ $(x) = $(y) ] : test for equality
-<br>[ $(x) != $(y) and friends ] : test for inequality
 <p>
 Debug
 <p>
@@ -975,7 +940,7 @@ db3 : set debug level, 0 through 9
 <p>
 If you haven't spent time using the ed editor, you may find this program awkward.
 It seems like you have to use line numbers,
-which are ever changing as text is added and removed.
+which are ever changing as text is edited.
 However, line numbers are rarely needed in practice.
 Here are some tips for avoiding them.
 
@@ -1125,7 +1090,6 @@ Thus .. is always the physical parent directory.
 If the string contains $ [] * ? or a leading ~,
 environment variables are expanded, and globbing is performed.
 Thus cd ~/work takes you to the work directory under your home directory.
-This is performed by the shell, and is separate from edbrowse variables, which will be described later.
 
 <p>
 This command does not change any filenames that may be active.
@@ -1163,7 +1127,6 @@ Also, a leading ~/ is replaced with $HOME/,
 making it easy to edit files in your home directory
 such as ~/.profile.
 Or use ~user for another user's home directory.
-This is once again separate from edbrowse variables.
 
 <p>
 Shell meta characters are expanded, provided the result is one file name.
@@ -1177,10 +1140,6 @@ and get all the C source files in the current directory.
 Variable substitution and globbing of filenames can be completely suppressed by a leading backquote.
 If you really want to read a file called *a?, type r `*a?.
 You can escape an individual shell meta character with the backslash, as in fun\*house.
-
-<LI><p>
-p text will print the text, basically an echo.
-p without anything following prints the line as usual.
 
 <LI><p>
 Many versions of ed place a $ at the end of a listed line,
@@ -1203,7 +1162,6 @@ Type qt to quit absolute.
 Capital J joins lines together with spaces between them.
 J: joins lines using a colon separator.
 Any string can be used here.
-Whitespace is significant here, as in J : .
 
 <LI><p>
 0kx unsets the label x.
@@ -2215,28 +2173,8 @@ Recall that the hist command prints your editting history, so you can see which 
 Similarly, .t-3 copies a file into a directory that is 3 levels down.
 
 <p>
-.l3 links the file to the directory in session 3. This is a hard link.
-If you want a different name for the second link, switch to session 3 and use the s command to rename that file.
-Similarly, .l+2 links this file into the directory two levels up in the edbrowse history.
-
-<p>
-.L3 creates a symbolic link.
-Again, you can switch to session 3 and rename it if you wish.
-For best results, the current directory should have an absolute path.
-If it does not, results can be unexpected.
-If you are located in directory foo, and you edit . in session 1 and ../bar in session 2, .L2 will not do what you want.
-A file j in foo will have a counterpart j in ../bar that is a symbolic link to ./j, because that is how it is seen from foo.
-j is symbolically linked to j.
-Accessing j in bar leads to infinite recursion.
-If you want your files in foo symbolically linked to bar, using relative links, do this.
-cd bar ; edbrowse ../foo .
-Now .L2 sees the file j, which is ../foo/j, links it into the current directory, which is bar, thus bar has a file j which is a symbolic linke to ../foo/j.
-Switch to session 2, which is bar, and rename the links if you wish.
-This is the correct strategy for building relative symbolic links in edbrowse.
-
-<p>
-“What's the point of all this?” you may ask.
-“What's wrong with the shell?”
+"What's the point of all this?" you may ask.
+"What's wrong with the shell?"
 
 <p>
 Nothing, as long as the file names are small and familiar.
@@ -2468,7 +2406,7 @@ This is a must-have program for people who want a command line environment.
 This function is also used to format html text into sentences and phrases, as part of the browse process, producing lines no longer than 80 columns, or 80 utf8 characters.
 Again, the fll command changes the format line length.
 Each character counts as one column, so wide characters, e.g. a line with several emojis, might cause an overflow on your terminal.
-Try fll=78 to give yourself some breathing room.
+Try fll 78 to give yourself some breathing room.
 
 <h2 id="race">Race Conditions</h2>
 
@@ -2602,32 +2540,6 @@ In this case you'll want to retain the public url,
 which will always work, even if the company relocates its web server.
 Use your best judgment.
 
-<p>
-When fetching by https, or imaps or pop3s or ftps or any of those protocols that end in s, a secure socket layer (ssl) is used to encrypt the data.
-edbrowse can use any of several ssl engines to perform the encryption and decryption.
-The most common engines are openssl and gnutls.
-This is at the whim of curl, a library that edbrowse uses to communicate over the internet.
-In other words, edbrowse does not select the ssl engine.
-For the most part, it doesn't matter.
-However, once in a while, one ssl engine might encounter a problem, where another would have no trouble.
-Thus edbrowse may work fine on a given website, on one machine, but not on another.
-It takes a bit of detective work to track down the problem - even to know which engine you are using.
-
-<p>
-One problem that pops up occasionally is: "dh key too short".
-This is from openssl, and can be caused by a low security setting in /etc/ssl/openssl.cnf.
-You could update that file, but if you don't have permission to do so,
-edbrowse responds to the environment variable EBCIPHERS.
-Set this to the list of cifers that you want the ssl engine to use.
-This string is opaque to edbrowse, and to curl; it is simply passed on to ssl.
-However, there is a shortcut.
-EBCIPHERS=1 becomes DEFAULT@SECLEVEL=1, which is what openssl needs to generate the larger keys, to solve the "short key" problem.
-But don't set this variable on another machine, because it completely derails the other ssl engines.
-They may need a different setting for EBCIPHERS, or more likely, they will run just fine out of the box.
-
-<p>
-We may add other shortcuts, EBCIPHERS=2 etc, as we discover other configuration issues in other ssl engines.
-
 <h2 id="browse">Browse Mode</h2>
 
 <p>
@@ -2715,7 +2627,7 @@ as though you had entered `e file.html' alone.
 
 <p>
 If a url is opened from the command line,
-as in `edbrowse www.google.com', it is automatically browsed.
+as in `e www.google.com', it is automatically browsed.
 Type `ub' to revert back to the raw html.
 
 <h2 id="htab">HTML Tables</h2>
@@ -2939,8 +2851,8 @@ Most people never read technical web pages, but if you do...
 
 <p>
 A subscript, as indicated by html tags, is enclosed in brackets.
-Thus x&lt;sub&gt;n&lt;/sub&gt; becomes x[n].
-(sub should render the subscript properly in your css file - lower and in a smaller font.)
+Thus x&lt;span class=sub&gt;n&lt;/span&gt; becomes x[n].
+(span.sub should render the subscript properly in your css file - lower and in a smaller font.)
 This transformation is not done if the subscript is a one or two digit number.
 Thus x subscript 1 is rendered x1, just like your professor would say it.
 This is not ambiguous, as you might first think;
@@ -2950,22 +2862,14 @@ Even 17a3b3 is not ambiguous;
 it is a translation of 17 times a[3] times b[3].
 
 <p>
-Superscripts, as indicated by &lt;sup&gt;, are enclosed in parentheses with a preceding arrow.
+Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses with a preceding arrow.
 The parentheses are omitted if the superscript is a number.
 Thus x cubed looks like x^3,
 while x to the n-1 power looks like x^(n-1).
-Again, your css file should define sup,
-but even if it doesn't, most browsers will do the right thing, putting the text above and in a smaller font.
+Again, your css file should define span.sup.
 
 <p>
-The sup and sub tags are honored in other browsers and screen readers,
-so it is best to use these tags,
-rather than spans with css that places the text visually above or below the line.
-The sup and sub tags preserve the semantics of the relationship,
-so that edbrowse, and other browsers, can read the text in a helpful manner.
-
-<p>
-Edbrowse supports the translation of the &amp;word; constructs in html,
+Edbrowse supports the translation of certain &amp;word; constructs in html,
 such as &amp;lt; for the less than sign,
 along with &amp;#code: or &amp;#xcode; for direct inclusion of unicodes in html.
 The Greek letter theta can be encoded as &amp;theta;
@@ -3095,7 +2999,6 @@ In this case you will have to go to the web page to find out what it contains.
 <p>
 Note, an image that is not part of a hyperlink has its alt text enclosed in brackets,
 as in [girl with a long red braid].
-Images with no alt text are omitted, unless you have enabled attached images via attimg+.
 
 <p>
 To follow a link, enter the `g' (go) command.
@@ -3930,15 +3833,21 @@ such as social security numbers or credit card numbers,
 over an insecure channel.
 Make sure the form is using ssl.
 How can you tell?
-i? describes the button as "submit secure".
-This is similar to the lock icon that Explorer uses to tell you that your connection is secure.
+The submit button will have the word "secure" added to its text.
+<p>
+&lt;Make your purchase now secure&gt;
+<p>
+This is similar to the lock icon that Explorer uses to tell you that your connection is secure,
+although edbrowse is not quite as foolproof.
+A website could fake you out by putting the word secure in the submit text.
 
 <p>
 Note that generic buttons, besides the submit button, can also submit your form
 through Javascript.
 I don't know if that button is going to submit the form or not,
-and it could send it through an insecure channel.
-At some point we have to trust the website that we are on, after verifying the url, that it is indeed the genuine article.
+and I don't want to put the word "secure" on every button on the page.
+I only add it to the submit button,
+but if that button is secure then the others are probably secure too.
 
 <p>
 If you have logins on secure servers,
@@ -5029,88 +4938,6 @@ or leave it out altogether if you are happy with edbrowse out of the box.
 The -d option on the command line overrides any db settings that are made by the init script.
 Thus edbrowse -d4 could make a lot of noise, even if db0 is the first entry in your init script.
 
-<h2 id="var">Edbrowse Variables</h2>
-
-<p>
-Variables can be set and accessed, usually for scripting purposes.
-The following sets jj to the string "hello world".
-<p>
-var jj=hello world
-
-<p>
-The syntax of setting and referencing variables is quite rigid, just as it is in the shell.
-There can be no whitespace before the equals sign, and any whitespace following is significant.
-A variable begins with a letter, and contains only letters and digits.
-Variable names are case sensitive.
-
-<p>
-$(jj) expands the variable jj inline.
-This is the makefile syntax, rather than the simpler shell syntax $jj, which you might stumble upon by accident.
-There is no escape character to prevent the expansion.
-If you want to replace x with $(jj), you must do something like this.
-<p>
-s/x/$(jj
-<br>
-s/jj/jj)
-
-<p>
-Variables are not set or expanded during text entry,
-so you can type a and write your edbrowse scripts or makefiles as you please.
-Also, expansion does not take place if jj is not defined.
-Thus you are unlikely to run into this unless you are writing scripts that use variables.
-
-<p>
-A modest amount of arithmetic is supported, similar to $((expression)) in the shell.
-Here an expression is a sequence of variables or numbers, separated by the operators +, -, *, and /.
-The following evaluates to 49.
-<p>
-var jj=7
-<br>
-p $(jj+3*4+5*6)
-
-<p>
-var jj=clear will clear the variable jj from the cache.
-This is similar to the "f clear" command, which clears the filename.
-
-<p>
-The edbrowse cache of variables is similar to, but completely separate from, the environment.
-Use : to access the environment.
-The following also produces 49, but the variable jj is in the environment, and will be passed down to any shell commands.
-<p>
-var jj:=7
-<br>
-p $(:jj+3*4+5*6)
-
-<p>
-A variable can exist in both worlds if you wish.
-<p>
-var z=elephant
-<br>
-var z:=$(z)
-
-<p>
-An arithmetic expression can include variables from both arenas, as in $(jj+7-3*:kk)
-
-<p>
-there is a test command, which is similar in syntax and function to that found in the shell.
-If the line comprises [ expression = expression ], then it quietly returns success if the expressions are equal,
-and returns error if they are not.
-The != operator does the opposite.
-Here is a goofy little function that counts to 17.
-
-<PRE>
-function+count17 {
-    db0
-    var i=0
-    while(*) {
-        var i=$(i+1)
-        p $(i)
-        [ $(i) != 17 ]
-    }
-    var i=clear
-}
-</PRE>
-
 <h2 id="ma">Mail Accounts</h2>
 
 The next chapter describes edbrowse as a mail client,
@@ -5235,7 +5062,7 @@ suffix = pdf
 content = application/pdf
 #  file must be local
 down_url
-program = pdftohtml -i -q -stdout -noframes %i
+program = pdftohtml -i -q -noframes %i %o
 outtype = H
 }
 <!--</font>--></PRE>
@@ -5252,8 +5079,6 @@ suffix = doc
 content = application/msword
 down_url
 #  without %o, the output is piped directly into the buffer
-# with %o, the output is sent to a temp file, then read back into the buffer
-# not every program can send its output to stdout
 program = catdoc %i
 outtype = T
 }
@@ -5278,7 +5103,7 @@ In this case the parameter is the password.
 type = pdf
 desc = pdf file with password
 suffix = pdfp
-program = pdftohtml -opw %p -i -q -stdout -noframes %i
+program = pdftohtml -opw %p -i -q -noframes %i %o
 outtype = H
 }
 <!--</font>--></PRE>
@@ -5883,7 +5708,7 @@ Here is a sample screenshot.
  7 [Gmail]/Starred, 0 messages
  8 [Gmail]/Trash, 16 messages
 Select a folder by number or by substring. q to quit,
-rf to refresh, l=number to change fetch limit, e=string to set envelope format.
+rf to refresh, l number to change fetch limit, e string to set envelope format.
 <!--</font>--></PRE>
 
 <p>
@@ -5901,7 +5726,6 @@ g in the middle of an email goes back up to the top.
 Type w to write the email formatted, or W to write and delete.
 Type u or U to save the email unformatted.
 Type a to save the attachments.
-r marks the email as read, and R marks it as unread.
 Type / to search for emails by subject, by sender, or by the text in the body of the email.
 Finally type h for the help message, which looks like this.
 
@@ -5925,11 +5749,7 @@ W	write this email to a file and delete it
 u	write this email unformatted to a file
 U	write this email unformatted to a file and delete it
 a	scan and save attachments
-r	mark as read
-R	mark as unread
 e	envelope format string
-l	set fetch limit
-=	print the number of messages in the list
 <!--</font>--></PRE>
 
 <p>
@@ -6033,10 +5853,10 @@ Back up to folders and the message count is still what it was before.
 Type rf to get a new, accurate message count on all the folders.
 
 <p>
-When viewing the folders or the envelopes, "l=number" will change the fetch limit, how many envelopes fetched at a time,
-and "e=format" changes the format of the envelope.
+When viewing the folders or the envelopes, "l number" will change the fetch limit, how many envelopes fetched at a time,
+and "e format" changes the format of the envelope.
 These are the same as the imap client.
-For instance, "e=fstd" shows from,
+For instance, "e fstd" shows from,
 subject, to, and date.
 The n attribute is not meaningful here, since edbrowse already maintains line numbers for you.
 If you are on the envelopes page, you might want to refresh, so you can see them in the new format.
