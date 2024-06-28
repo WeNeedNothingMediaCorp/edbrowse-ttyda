@@ -5417,13 +5417,21 @@ pwd:
 // TODO: @dsl-zero, add documentation; add some checks (browse mode, js, js_ch_dot)
 	if (stringEqual(line, "jsus")) {
 
-		cw->dot = cw->js_ch_dot;
+		cw->dot = cw->js_ch_ln1;
 		return true;
 	}
 
 	if (stringEqual(line, "jsue")) {
 
-		cw->dot = cw->js_ch_dol;
+
+		if (cw->js_ch_ln3 && cw->js_ch_ln2) {
+			cw->dot = (cw->js_ch_ln3 > cw->js_ch_ln2) ? cw->js_ch_ln3 : cw->js_ch_ln2;
+		} else if (cw->js_ch_ln2 && cw->js_ch_ln1) {
+			cw->dot = cw->js_ch_ln2;
+    		} else {
+        		cw->dot = cw->js_ch_ln1;
+    		}
+
 		return true;
 	}
 

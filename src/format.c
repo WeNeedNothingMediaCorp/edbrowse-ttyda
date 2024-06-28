@@ -3201,6 +3201,7 @@ void i_printf(int msg, ...)
 {
 	const char *realmsg = i_message(msg);
 	va_list p;
+
 	va_start(p, msg);
 	vprintf(realmsg, p);
 	va_end(p);
