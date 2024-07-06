@@ -1171,6 +1171,9 @@ void cxSwitch(int cx, bool interactive)
 // field, then switch back to the window that contains that form.
 // We need to sync up javascript before taking any action.
 	jClearSync();
+// reset JS changed line markers and message 
+	cw->js_ch_msg = cw->js_ch_ln1 = cw->js_ch_ln2 = cw->js_ch_ln3 = 0; 
+
 	if (interactive && debugLevel) {
 		if (created)
 			i_printf(MSG_SessionNew);
@@ -4807,7 +4810,6 @@ The second parameter is a result parameter, the new command to run.
 In rare cases we might allocate a new (longer) command line to run,
 like rf (refresh), which could be a long url.
 *********************************************************************/
-
 static char shortline[60];
 static int twoLetter(const char *line, const char **runThis)
 {
@@ -5413,26 +5415,53 @@ pwd:
 	}
 
 
-// set dot to JavaScript change dot
-// TODO: @dsl-zero, add documentation; add some checks (browse mode, js, js_ch_dot)
-	if (stringEqual(line, "jsus")) {
+// move dot to JavaScript first change marker 
+// TODO: @dsl-zero, add documentation; add some checks (browse mode, js, js_ch_*)
+	if (!strncmp(line, "jsus", 4)) {
+		if (!cw->browseMode) {
+		  setError(MSG_NoBrowse);
+		  return false;
+		}
 
-		cw->dot = cw->js_ch_ln1;
-		return true;
+		if(!cw->js_ch_msg){
+		  setError(MSG_NoJSUp);
+		  return false;
+		}
+
+// jsus with no arguments is the most efficient, we just move dot to the first updated line
+		if(line[4] == '\0'){
+		  cw->dot = cw->js_ch_ln1;
+		  return true;
+		}
+
 	}
 
-	if (stringEqual(line, "jsue")) {
+// move dot to JavaScript last line in update
+	if (!strncmp(line, "jsue", 4)) {
 
+	    if (!cw->browseMode) {
+				setError(MSG_NoBrowse);
+				return false;
+	    }
 
-		if (cw->js_ch_ln3 && cw->js_ch_ln2) {
-			cw->dot = (cw->js_ch_ln3 > cw->js_ch_ln2) ? cw->js_ch_ln3 : cw->js_ch_ln2;
-		} else if (cw->js_ch_ln2 && cw->js_ch_ln1) {
-			cw->dot = cw->js_ch_ln2;
-    		} else {
-        		cw->dot = cw->js_ch_ln1;
-    		}
+		if(!cw->js_ch_msg){
+		  setError(MSG_NoJSUp);
+		  return false;
+		}
 
-		return true;
+// jsue with no arguments is the most efficient, we just move dot to the last line of the update range 
+	    if(line[4] == '\0'){
+
+	      if (cw->js_ch_ln3 && cw->js_ch_ln2) {
+				  cw->dot = (cw->js_ch_ln3 > cw->js_ch_ln2) ? cw->js_ch_ln3 : cw->js_ch_ln2;
+	      } else if (cw->js_ch_ln2 && cw->js_ch_ln1) {
+				  cw->dot = cw->js_ch_ln2;
+	      } else {
+				  cw->dot = cw->js_ch_ln1;
+	      }
+	      return true;
+	    }
+
 	}
 
 	if (stringEqual(line, "ub") || stringEqual(line, "et")) {
@@ -9146,4 +9175,102 @@ int fieldIsChecked(int tagno)
 	if (locateTagInBuffer(tagno, &ln1, &ln2, &p1, &p2, &s, &t))
 		return (*s == '+');
 	return -1;
+}
+
+// typically js_ch_msgs_present will either be passed with true for negation (eg. -d for all but delete) 
+// or false for setting absolute, though this is done anyway (eg. =a+u only additions and updates)   
+// Could maybe implement a user space variable to set a default pattern, but would come at the 
+// cost of a less efficient non-argument jsus/jsue/jsup (ie. current default doesn't have to do
+// this check, but will, as a result, seek to deletion change lines when called. That is really only an
+// issue when scripting functions where specifying an argument isn't a big deal anyway)
+//
+// js_ch_msgs_present is +1 the largest JS changed message index. 454 is the currently the largest  
+static const size_t JS_CH_MSGS_INDEX_SIZE = 455;
+static const size_t JS_CH_MSGS_SIZE = sizeof(bool) * JS_CH_MSGS_INDEX_SIZE;
+bool jsChMsgInPattern(char* pattern, bool js_ch_msgs_present[JS_CH_MSGS_INDEX_SIZE]) {
+
+	if(pattern[0] == '='){
+		pattern[0] = '+';
+		memset(js_ch_msgs_present, 0, JS_CH_MSGS_SIZE);
+	}
+
+// validate pattern
+// checks for alternating +/- add-negate flags w/ categories and/or valid JS changed message values
+// doesn't care about redundant or superflous additions/negations, that is on you (and just more costly, nbd) 
+
+	const size_t re_non_msg_chars = 18;
+	const size_t num_msgs = 17;	
+// msg will not be more than 3 char + pipe
+	const size_t msg_char_len = 4;
+
+	char re[re_non_msg_chars + num_msgs * (msg_char_len + 1) + 1]; 
+
+	snprintf(re, sizeof(re),
+        "/^([+-]([aud]|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d))+$/",
+			 MSG_LineAdd1,MSG_LineAdd2,MSG_LineAddZ1,MSG_LineAddZ2,MSG_LineAddZ3,
+			 MSG_LineUpdate1,MSG_LineUpdateRange,MSG_LineUpdate2,MSG_LineUpdate3,MSG_LineUpdateZ1,MSG_LineUpdateZ2,MSG_LineUpdateZ3,
+			 MSG_LineDelete1,MSG_LineDelete2,MSG_LineDeleteZ1,MSG_LineDeleteZ2,MSG_LineDeleteZ3);
+
+    regexpCompile(re, true);
+
+	if (!re_cc)
+			return false;
+
+			//setError(MSG_JSBadChPat);
+
+
+
+	/*()	if(pcre2_match_data(re_cc, (uchar*)pattern, PCRE2_ZERO_TERMINATED, 0, 0, match_data, NULL))){
+			
+			pcre2_match_data_free(match_data);
+			pcre2_code_free(re_cc);
+
+			return false;
+
+}*/
+
+			re_count =
+			    pcre2_match(re_cc, (uchar*)subject,
+				      pstLength((pst) subject) - 1, 0, 0,
+				      match_data, NULL);
+
+
+			if ((re_count >= 0) ^ unmatch)
+	pcre2_match_data_free(match_data);
+	pcre2_code_free(re_cc);
+
+    bool present_flag = true;
+	int i, j;
+
+// if additional messages are ever added remember to update validation, loop counters, and js_ch_msg_present size 
+    int MSG_add[]    = {MSG_LineAdd1, MSG_LineAdd2, MSG_LineAddZ1, MSG_LineAddZ2, MSG_LineAddZ3};
+    int MSG_update[] = {MSG_LineUpdate1, MSG_LineUpdateRange, MSG_LineUpdate2, MSG_LineUpdate3, MSG_LineUpdateZ1, MSG_LineUpdateZ2, MSG_LineUpdateZ3};
+    int MSG_delete[] = {MSG_LineDelete1, MSG_LineDelete2, MSG_LineDeleteZ1, MSG_LineDeleteZ2, MSG_LineDeleteZ3};
+
+    for (i = 0; i < strlen(pattern); i++) {
+        if (pattern[i] == '+') {
+            present_flag = true;
+        } else if (pattern[i] == '-') {
+            present_flag = false;
+        } else if (pattern[i] == 'a') {
+            for (j = 0; j < 5; j++) {
+                js_ch_msgs_present[MSG_add[j]] = present_flag;
+            }
+        } else if (pattern[i] == 'u') {
+            for (j = 0; j < 7; j++) {
+                js_ch_msgs_present[MSG_update[j]] = present_flag;
+            }
+        } else if (pattern[i] == 'd') {
+            for (j = 0; j < 5; j++) {
+                js_ch_msgs_present[MSG_delete[j]] = present_flag;
+            }
+        } else {
+            js_ch_msgs_present[(int)pattern[i] - '0'] = present_flag;
+        }
+    }
+
+	js_ch_msgs_present[0] = false;
+
+	return js_op_present[cw->js_ch_msg];
+	
 }

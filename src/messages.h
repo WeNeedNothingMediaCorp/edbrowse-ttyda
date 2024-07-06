@@ -490,7 +490,8 @@ enum {
 	MSG_NoTilde,
 	MSG_Submit,
 	MSG_FrameNotHTML,
-	MSG_notused393,
+// TODO: @DSL-Zero, document change and 
+	MSG_NoJSUp,
 	MSG_Bymail,
 	MSG_Reset,
 	MSG_ShellExpand,
@@ -807,7 +808,8 @@ enum {
 	MSG_NoLinks,
 	MSG_NoButtons,
 	MSG_NoImages,
-	MSG_hold710,
+// TODO: @DSL-Zero translate and document
+	MSG_BadJSChPat,
 	MSG_ManyInputFields,
 	MSG_ManyLinks,
 	MSG_ManyButtons,
